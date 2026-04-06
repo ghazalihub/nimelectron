@@ -1,133 +1,134 @@
 import pixie, vmath, chroma, tables, strutils
 import engine/core/dom, engine/style/resolver, engine/layout/engine, engine/painter/pipeline, engine/script/bridge
 
-# Advanced Sciter Clone - Final Showcase
-# Single static binary with high-performance ARC/ORC memory management
+# Ultimate Sciter Clone Showcase
+# Architected for modularity, high performance (ARC/ORC), and advanced UI features.
 
 proc main() =
-  echo "Starting Sciter Engine V2 (Advanced Architecture)..."
+  echo "--- Sciter Engine Showcase Starting ---"
 
-  # 1. Initialize Engine State
-  let root = newNode("app")
-  root.style.width = 1000
-  root.style.height = 800
-  root.style.backgroundColor = parseHtmlColor("#0a0a0a")
+  # 1. Initialize DOM Tree
+  let root = newNode("body")
+  root.id = "app"
+  root.style.width = 1024
+  root.style.height = 768
+  root.style.backgroundColor = parseHtmlColor("#121212")
   root.style.flexDirection = "column"
 
-  let scriptEngine = newScriptEngine(root)
-  scriptEngine.registerBuiltins()
-
-  try:
-    pipeline.defaultFont = readFont("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf")
-  except:
-    echo "Warning: Default font not found"
-
-  # 2. Build Complex UI
-
-  # Navbar
+  # Navigation Bar
   let nav = newNode("nav")
-  nav.style.width = 1000
-  nav.style.height = 80
-  nav.style.backgroundColor = parseHtmlColor("#161616")
-  nav.style.boxShadowBlur = 15
-  nav.style.boxShadowColor = parseHtmlColor("#000")
+  nav.style.height = 70
+  nav.style.backgroundColor = parseHtmlColor("#1f1f1f")
   nav.style.flexDirection = "row"
-  nav.style.paddingLeft = 40
+  nav.style.paddingLeft = 30
   root.addChild(nav)
 
-  let logo = newTextNode("SCITER-CLONE")
-  logo.style.color = parseHtmlColor("#00ffcc")
-  logo.style.marginTop = 30
-  nav.addChild(logo)
+  let brand = newTextNode("SCITER ENGINE V3")
+  brand.style.color = parseHtmlColor("#03dac6")
+  brand.style.marginTop = 25
+  nav.addChild(brand)
 
-  # Body with Sidebar
-  let body = newNode("div")
-  body.style.flexGrow = 1
-  body.style.flexDirection = "row"
-  root.addChild(body)
+  # Main Layout
+  let container = newNode("div")
+  container.style.flexGrow = 1
+  container.style.flexDirection = "row"
+  root.addChild(container)
 
+  # Sidebar
   let sidebar = newNode("div")
-  sidebar.style.width = 250
-  sidebar.style.backgroundColor = parseHtmlColor("#121212")
+  sidebar.style.width = 240
+  sidebar.style.backgroundColor = parseHtmlColor("#181818")
   sidebar.style.paddingTop = 20
-  body.addChild(sidebar)
+  container.addChild(sidebar)
 
-  for i in 1..8:
-    let link = newNode("div")
-    link.style.width = 210
-    link.style.height = 40
-    link.style.backgroundColor = parseHtmlColor("#1a1a1a")
-    link.style.borderRadius = 8
-    link.style.marginLeft = 20
-    link.style.marginTop = 10
-    sidebar.addChild(link)
+  for i in 1..5:
+    let btn = newNode("div")
+    btn.id = "btn-" & $i
+    btn.style.width = 200
+    btn.style.height = 40
+    btn.style.backgroundColor = parseHtmlColor("#2c2c2c")
+    btn.style.borderRadius = 5
+    btn.style.marginLeft = 20
+    btn.style.marginTop = 10
+    sidebar.addChild(btn)
 
-    let linkText = newTextNode("Module " & $i)
-    linkText.style.color = parseHtmlColor("#888")
-    linkText.style.marginLeft = 15
-    linkText.style.marginTop = 10
-    link.addChild(linkText)
+    let txt = newTextNode("Dashboard Module " & $i)
+    txt.style.color = parseHtmlColor("#888")
+    txt.style.marginLeft = 15
+    txt.style.marginTop = 12
+    btn.addChild(txt)
 
-  # Main Content View
-  let main = newNode("div")
-  main.style.flexGrow = 1
-  main.style.backgroundColor = parseHtmlColor("#0d0d0d")
-  main.style.paddingLeft = 40
-  main.style.paddingTop = 40
-  body.addChild(main)
+  # Content
+  let content = newNode("div")
+  content.id = "main-content"
+  content.style.flexGrow = 1
+  content.style.backgroundColor = parseHtmlColor("#121212")
+  content.style.paddingLeft = 40
+  content.style.paddingTop = 40
+  container.addChild(content)
 
-  let title = newTextNode("Dashboard Analytics")
-  title.style.color = parseHtmlColor("#ffffff")
-  main.addChild(title)
+  let header = newTextNode("Active Performance Metrics")
+  header.style.color = parseHtmlColor("#ffffff")
+  content.addChild(header)
 
-  # Responsive-like Grid
+  # Performance Cards
   let grid = newNode("div")
   grid.style.flexDirection = "row"
   grid.style.marginTop = 30
-  main.addChild(grid)
+  content.addChild(grid)
 
   for i in 1..2:
     let card = newNode("div")
-    card.attributes["id"] = "card" & $i
+    card.id = "card-" & $i
     card.style.width = 300
-    card.style.height = 180
-    card.style.backgroundColor = parseHtmlColor("#1c1c1c")
+    card.style.height = 150
+    card.style.backgroundColor = parseHtmlColor("#1e1e1e")
     card.style.borderRadius = 12
+    card.style.borderColor = parseHtmlColor("#333")
+    card.style.borderWidth = 1
     card.style.marginRight = 20
-    card.style.paddingLeft = 20
-    card.style.paddingTop = 20
     grid.addChild(card)
 
-    let ct = newTextNode("Metric " & $i)
-    ct.style.color = parseHtmlColor("#666")
-    card.addChild(ct)
+  # 2. Integrate Scripting
+  let engine = newScriptEngine(root)
+  engine.registerBuiltins()
 
-  # 3. Dynamic Scripting Interactivity
-  echo "Executing UI Scripts..."
-  discard scriptEngine.eval("""
-    print('Engine: Running dynamic script updates...');
-    setElementStyle('card1', 'background-color', '#252525');
-    setElementStyle('card1', 'border-radius', '20');
-    setElementStyle('card2', 'background-color', '#2d2d2d');
-    print('Engine: Dynamic styles applied.');
+  echo "Executing Scripts..."
+  discard engine.eval("""
+    print('Sciter: Engine fully loaded.');
+    function onMouseEvent(x, y, btn, pressed) {
+       if (pressed) {
+         print('Interacting with native DOM...');
+         setStyle('card-1', 'background-color', '#bb86fc');
+         setStyle('card-2', 'opacity', '0.7');
+         print('UI state updated via JS callback.');
+       }
+    }
   """)
 
-  # 4. Final Layout Pass
-  echo "Final Layout Pass..."
-  computeLayout(root, 0, 0, 1000)
+  # 3. Simulate User Interaction
+  echo "Simulating click event..."
+  engine.injectMouseEvent(500, 500, 0, true)
 
-  # 5. Final Paint Pass
-  echo "Final Paint Pass..."
-  let image = newImage(1000, 800)
+  # 4. Final Processing and Rendering
+  echo "Running Layout Pipeline..."
+  computeLayout(root, 0, 0, 1024, 768)
+
+  echo "Running Painting Pipeline..."
+  try:
+    pipeline.defaultFont = readFont("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf")
+  except:
+    echo "Warning: Font not found, skipping text rendering"
+
+  let image = newImage(1024, 768)
   let ctx = image.newContext()
   paint(root, ctx)
 
-  # 6. Save Output
-  image.writeFile("sciter_v2_final.png")
-  echo "Engine: Render complete. Output: sciter_v2_final.png"
+  image.writeFile("sciter_v3_final_showcase.png")
+  echo "Showcase image generated: sciter_v3_final_showcase.png"
 
-  scriptEngine.free()
-  echo "Engine Shutdown."
+  engine.free()
+  echo "--- Showcase Finished ---"
 
 if isMainModule:
   main()

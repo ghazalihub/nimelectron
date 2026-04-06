@@ -3,22 +3,16 @@ import ../core/dom, pixie, chroma, vmath
 var defaultFont*: Font
 
 proc paint*(node: Node, ctx: Context) =
-  if node.kind == nkElement:
-    # 1. Paint Box Shadow (Gaussian Blur-like simplified with multiple layers)
-    if node.style.boxShadowBlur > 0:
-      let shadowColor = node.style.boxShadowColor
-      for i in 1..int(node.style.boxShadowBlur / 2):
-        ctx.fillStyle = Color(r: shadowColor.r, g: shadowColor.g, b: shadowColor.b, a: shadowColor.a / float32(i))
-        ctx.fillRect(
-          node.computedLayout.x - float32(i),
-          node.computedLayout.y - float32(i),
-          node.computedLayout.width + float32(i*2),
-          node.computedLayout.height + float32(i*2)
-        )
+  # Handle complex transparency (opacity)
+  let parentOpacity = if node.parent != nil: node.parent.style.opacity else: 1.0
+  let currentOpacity = node.style.opacity * parentOpacity
 
-    # 2. Paint background with border-radius
+  if node.kind == nkElement:
+    # 1. Background
     if node.style.backgroundColor.a > 0:
-      ctx.fillStyle = node.style.backgroundColor
+      var bg = node.style.backgroundColor
+      bg.a *= currentOpacity
+      ctx.fillStyle = bg
       if node.style.borderRadius > 0:
         ctx.fillRoundedRect(
           rect(node.computedLayout.x, node.computedLayout.y, node.computedLayout.width, node.computedLayout.height),
@@ -27,13 +21,29 @@ proc paint*(node: Node, ctx: Context) =
       else:
         ctx.fillRect(node.computedLayout.x, node.computedLayout.y, node.computedLayout.width, node.computedLayout.height)
 
+    # 2. Border
+    if node.style.borderWidth > 0 and node.style.borderColor.a > 0:
+      var bc = node.style.borderColor
+      bc.a *= currentOpacity
+      ctx.strokeStyle = bc
+      ctx.lineWidth = node.style.borderWidth
+      if node.style.borderRadius > 0:
+        ctx.strokeRoundedRect(
+          rect(node.computedLayout.x, node.computedLayout.y, node.computedLayout.width, node.computedLayout.height),
+          node.style.borderRadius
+        )
+      else:
+        ctx.strokeRect(rect(node.computedLayout.x, node.computedLayout.y, node.computedLayout.width, node.computedLayout.height))
+
     # 3. Recursively paint children
     for child in node.children:
       paint(child, ctx)
 
   elif node.kind == nkText:
     if node.style.color.a > 0:
-      ctx.fillStyle = node.style.color
+      var tc = node.style.color
+      tc.a *= currentOpacity
+      ctx.fillStyle = tc
       if defaultFont != nil:
         defaultFont.size = 14
         ctx.image.fillText(defaultFont, node.text, translate(vec2(node.computedLayout.x, node.computedLayout.y)))

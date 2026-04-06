@@ -29,34 +29,26 @@ proc matches*(node: Node, selector: Selector): bool =
   of skTag:
     return node.tagName == selector.name
   of skClass:
-    let classAttr = node.attributes.getOrDefault("class", "")
-    let classes = classAttr.splitWhitespace()
-    return selector.name in classes
+    return selector.name in node.classes
   of skId:
-    let idAttr = node.attributes.getOrDefault("id", "")
-    return node.tagName == selector.name or idAttr == selector.name
+    return node.id == selector.name
 
 proc applyProperty*(style: var Style, key, value: string) =
   try:
     case key:
     of "color": style.color = parseHtmlColor(value)
     of "background-color": style.backgroundColor = parseHtmlColor(value)
+    of "border-color": style.borderColor = parseHtmlColor(value)
+    of "border-width": style.borderWidth = parseFloat(value)
+    of "border-radius": style.borderRadius = parseFloat(value)
     of "width": style.width = parseFloat(value)
     of "height": style.height = parseFloat(value)
     of "padding":
       let v = parseFloat(value)
       style.paddingTop = v; style.paddingRight = v; style.paddingBottom = v; style.paddingLeft = v
-    of "padding-top": style.paddingTop = parseFloat(value)
-    of "padding-right": style.paddingRight = parseFloat(value)
-    of "padding-bottom": style.paddingBottom = parseFloat(value)
-    of "padding-left": style.paddingLeft = parseFloat(value)
     of "margin":
       let v = parseFloat(value)
       style.marginTop = v; style.marginRight = v; style.marginBottom = v; style.marginLeft = v
-    of "margin-top": style.marginTop = parseFloat(value)
-    of "margin-right": style.marginRight = parseFloat(value)
-    of "margin-bottom": style.marginBottom = parseFloat(value)
-    of "margin-left": style.marginLeft = parseFloat(value)
     of "flex-direction": style.flexDirection = value
     of "justify-content": style.justifyContent = value
     of "align-items": style.alignItems = value
@@ -66,17 +58,17 @@ proc applyProperty*(style: var Style, key, value: string) =
     of "position": style.position = value
     of "top": style.top = parseFloat(value)
     of "left": style.left = parseFloat(value)
-    of "border-radius": style.borderRadius = parseFloat(value)
-    of "box-shadow-blur": style.boxShadowBlur = parseFloat(value)
-    of "box-shadow-color": style.boxShadowColor = parseHtmlColor(value)
+    of "overflow": style.overflow = value
+    of "opacity": style.opacity = parseFloat(value)
   except:
     discard
 
 proc resolveStyle*(node: Node, sheet: StyleSheet) =
-  # 1. Inheritance (color)
+  # 1. Inheritance (color, opacity)
   if node.parent != nil:
-    if node.style.color.a == 0: # If not set explicitly
+    if node.style.color.a == 0:
        node.style.color = node.parent.style.color
+    node.style.opacity = node.parent.style.opacity # Simple inheritance multiplication is better in a real engine
 
   # 2. Match rules and sort by specificity
   var matchedRules: seq[StyleRule] = @[]

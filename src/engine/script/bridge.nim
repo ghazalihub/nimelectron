@@ -30,7 +30,15 @@ proc eval*(engine: ScriptEngine, script: string): string =
   JS_FreeValue(engine.ctx, val)
   return "Evaluated"
 
-proc print(ctx: JSContext; this_val: JSValueConst; argc: cint; argv: JSValueConstArray): JSValue {.cdecl, raises: [].} =
+proc findNodeById(node: Node, id: string): Node =
+  if node.kind == nkElement and node.id == id:
+    return node
+  for child in node.children:
+    let found = findNodeById(child, id)
+    if found != nil: return found
+  return nil
+
+proc native_print(ctx: JSContext; this_val: JSValueConst; argc: cint; argv: JSValueConstArray): JSValue {.cdecl, raises: [].} =
   try:
     for i in 0..<argc:
       let str = JS_ToCString(ctx, argv[i])
@@ -42,35 +50,30 @@ proc print(ctx: JSContext; this_val: JSValueConst; argc: cint; argv: JSValueCons
     discard
   return JS_UNDEFINED
 
-proc findNodeById(node: Node, id: string): Node =
-  if node.kind == nkElement and node.attributes.getOrDefault("id") == id:
-    return node
-  for child in node.children:
-    let found = findNodeById(child, id)
-    if found != nil: return found
-  return nil
-
-proc setElementStyle(ctx: JSContext; this_val: JSValueConst; argc: cint; argv: JSValueConstArray): JSValue {.cdecl, raises: [].} =
+proc native_setStyle(ctx: JSContext; this_val: JSValueConst; argc: cint; argv: JSValueConstArray): JSValue {.cdecl, raises: [].} =
   try:
     if argc >= 3:
       let id = $JS_ToCString(ctx, argv[0])
       let key = $JS_ToCString(ctx, argv[1])
       let value = $JS_ToCString(ctx, argv[2])
-
       let node = findNodeById(currentEngine.root, id)
       if node != nil:
         node.style.applyProperty(key, value)
-  except:
-    discard
+  except: discard
   return JS_UNDEFINED
 
 proc registerBuiltins*(engine: ScriptEngine) =
   let global = JS_GetGlobalObject(engine.ctx)
-
-  let funcPrint = JS_NewCFunction(engine.ctx, print, "print", 1)
-  discard JS_SetPropertyStr(engine.ctx, global, "print", funcPrint)
-
-  let funcSetStyle = JS_NewCFunction(engine.ctx, setElementStyle, "setElementStyle", 3)
-  discard JS_SetPropertyStr(engine.ctx, global, "setElementStyle", funcSetStyle)
-
+  discard JS_SetPropertyStr(engine.ctx, global, "print", JS_NewCFunction(engine.ctx, native_print, "print", 1))
+  discard JS_SetPropertyStr(engine.ctx, global, "setStyle", JS_NewCFunction(engine.ctx, native_setStyle, "setStyle", 3))
   JS_FreeValue(engine.ctx, global)
+
+proc injectMouseEvent*(engine: ScriptEngine, x, y: float32, button: int, pressed: bool) =
+  # Simple event injection: finding node at x,y and triggering JS logic if needed
+  # For now, we'll just log to prove injection works
+  let script = "if (typeof onMouseEvent === 'function') onMouseEvent(" & $x & ", " & $y & ", " & $button & ", " & $pressed & ");"
+  discard engine.eval(script)
+
+proc injectKeyEvent*(engine: ScriptEngine, key: int, pressed: bool) =
+  let script = "if (typeof onKeyEvent === 'function') onKeyEvent(" & $key & ", " & $pressed & ");"
+  discard engine.eval(script)
