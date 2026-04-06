@@ -1,6 +1,8 @@
 import ../core/dom, tables, pixie, vmath, algorithm
 
 proc computeLayout*(node: Node, x, y, maxWidth, maxHeight: float32) =
+  if node.style.display == "none": return
+
   node.computedLayout.x = x + node.style.marginLeft
   node.computedLayout.y = y + node.style.marginTop
 
@@ -8,7 +10,7 @@ proc computeLayout*(node: Node, x, y, maxWidth, maxHeight: float32) =
     node.computedLayout.x += node.style.left
     node.computedLayout.y += node.style.top
 
-  # Final width/height to be used for children
+  # Base dimensions
   if node.style.width > 0:
     node.computedLayout.width = node.style.width
   else:
@@ -17,41 +19,40 @@ proc computeLayout*(node: Node, x, y, maxWidth, maxHeight: float32) =
   if node.style.height > 0:
     node.computedLayout.height = node.style.height
   else:
-    node.computedLayout.height = maxHeight # Simplified
+    node.computedLayout.height = maxHeight # Simplified, real engine would auto-size
 
   var contentX = node.computedLayout.x + node.style.paddingLeft
   var contentY = node.computedLayout.y + node.style.paddingTop
-  let availableWidth = node.computedLayout.width - node.style.paddingLeft - node.style.paddingRight
+  let availW = node.computedLayout.width - node.style.paddingLeft - node.style.paddingRight
 
   var flexItems: seq[Node] = @[]
-  var totalFlexGrow: float32 = 0
-  var fixedWidth: float32 = 0
+  var totalGrow: float32 = 0
+  var fixedW: float32 = 0
 
   for child in node.children:
-    if child.style.position != "absolute":
+    if child.style.display != "none" and child.style.position != "absolute":
       flexItems.add(child)
-      totalFlexGrow += child.style.flexGrow
+      totalGrow += child.style.flexGrow
       if child.style.width > 0:
-        fixedWidth += child.style.width + child.style.marginLeft + child.style.marginRight
+        fixedW += child.style.width + child.style.marginLeft + child.style.marginRight
 
-  let growableWidth = availableWidth - fixedWidth
-  var currentX = contentX
-  var currentY = contentY
+  let growW = availW - fixedW
+  var curX = contentX
+  var curY = contentY
 
   if node.style.flexDirection == "column" or node.style.flexDirection == "":
     for child in flexItems:
-      computeLayout(child, currentX, currentY, availableWidth, 0)
-      currentY += child.computedLayout.height + child.style.marginTop + child.style.marginBottom
+      computeLayout(child, curX, curY, availW, 0)
+      curY += child.computedLayout.height + child.style.marginTop + child.style.marginBottom
   elif node.style.flexDirection == "row":
     for child in flexItems:
-      var childW = child.style.width
-      if totalFlexGrow > 0 and child.style.flexGrow > 0:
-        childW = (child.style.flexGrow / totalFlexGrow) * growableWidth
+      var cw = child.style.width
+      if totalGrow > 0 and child.style.flexGrow > 0:
+        cw = (child.style.flexGrow / totalGrow) * growW
+      computeLayout(child, curX, curY, if cw > 0: cw else: availW, 0)
+      curX += child.computedLayout.width + child.style.marginLeft + child.style.marginRight
 
-      computeLayout(child, currentX, currentY, if childW > 0: childW else: availableWidth, 0)
-      currentX += child.computedLayout.width + child.style.marginLeft + child.style.marginRight
-
-  # Absolute positioning
+  # Absolute
   for child in node.children:
     if child.style.position == "absolute":
       computeLayout(child, node.computedLayout.x + child.style.left, node.computedLayout.y + child.style.top, node.computedLayout.width, node.computedLayout.height)
