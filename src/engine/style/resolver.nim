@@ -43,20 +43,8 @@ proc applyProperty*(style: var Style, key, value: string) =
     of "border-radius": style.borderRadius = parseFloat(value)
     of "width": style.width = parseFloat(value)
     of "height": style.height = parseFloat(value)
-    of "padding":
-      let v = parseFloat(value)
-      style.paddingTop = v; style.paddingRight = v; style.paddingBottom = v; style.paddingLeft = v
-    of "padding-top": style.paddingTop = parseFloat(value)
-    of "padding-right": style.paddingRight = parseFloat(value)
-    of "padding-bottom": style.paddingBottom = parseFloat(value)
-    of "padding-left": style.paddingLeft = parseFloat(value)
-    of "margin":
-      let v = parseFloat(value)
-      style.marginTop = v; style.marginRight = v; style.marginBottom = v; style.marginLeft = v
-    of "margin-top": style.marginTop = parseFloat(value)
-    of "margin-right": style.marginRight = parseFloat(value)
-    of "margin-bottom": style.marginBottom = parseFloat(value)
-    of "margin-left": style.marginLeft = parseFloat(value)
+    of "padding": style.setPadding(parseFloat(value))
+    of "margin": style.setMargin(parseFloat(value))
     of "flex-direction": style.flexDirection = value
     of "justify-content": style.justifyContent = value
     of "align-items": style.alignItems = value
@@ -71,21 +59,19 @@ proc applyProperty*(style: var Style, key, value: string) =
     of "overflow": style.overflow = value
     of "opacity": style.opacity = parseFloat(value)
     of "display": style.display = value
+    of "box-shadow-blur": style.boxShadowBlur = parseFloat(value)
+    of "box-shadow-color": style.boxShadowColor = parseHtmlColor(value)
   except:
     discard
 
 proc resolveStyle*(node: Node, sheet: StyleSheet) =
-  # 1. Inheritance
   if node.parent != nil:
-    if node.style.color.a == 0:
-       node.style.color = node.parent.style.color
+    if node.style.color.a == 0: node.style.color = node.parent.style.color
     node.style.opacity = node.parent.style.opacity
 
-  # 2. Sort rules and apply
   var matched: seq[StyleRule] = @[]
   for rule in sheet:
-    if node.matches(rule.selector):
-      matched.add(rule)
+    if node.matches(rule.selector): matched.add(rule)
 
   matched.sort(proc(x, y: StyleRule): int = cmp(x.selector.specificity, y.selector.specificity))
 

@@ -22,6 +22,8 @@ type
     overflow*: string # "visible", "hidden"
     opacity*: float32
     display*: string # "flex", "block", "inline", "none"
+    boxShadowBlur*: float32
+    boxShadowColor*: Color
 
   NodeKind* = enum
     nkElement, nkText
@@ -61,9 +63,6 @@ proc addChild*(parent, child: Node) =
   child.parent = parent
   parent.children.add(child)
 
-proc getAttribute*(node: Node, name: string): string =
-  node.attributes.getOrDefault(name, "")
-
 proc setAttribute*(node: Node, name, value: string) =
   node.attributes[name] = value
   if name == "id": node.id = value
@@ -75,3 +74,14 @@ proc setPadding*(style: var Style, v: float32) =
 
 proc setMargin*(style: var Style, v: float32) =
   style.marginTop = v; style.marginRight = v; style.marginBottom = v; style.marginLeft = v
+
+# Standard UI Elements Helpers
+proc newButton*(text: string): Node =
+  result = newNode("button")
+  let t = newTextNode(text)
+  result.addChild(t)
+
+proc newTextField*(placeholder: string): Node =
+  result = newNode("input")
+  let t = newTextNode(placeholder)
+  result.addChild(t)

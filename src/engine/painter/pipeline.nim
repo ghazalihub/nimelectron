@@ -9,13 +9,18 @@ proc paint*(node: Node, ctx: Context) =
   let curOpacity = node.style.opacity * parentOpacity
 
   if node.kind == nkElement:
-    # Handle overflow: hidden
-    let useMask = node.style.overflow == "hidden"
-    if useMask:
-      # In this simplified pipeline, we simulate masking by not drawing children outside bounds
-      discard
+    # Shadow support
+    if node.style.boxShadowBlur > 0:
+      let shadowColor = node.style.boxShadowColor
+      for i in 1..int(node.style.boxShadowBlur / 2):
+        ctx.fillStyle = Color(r: shadowColor.r, g: shadowColor.g, b: shadowColor.b, a: shadowColor.a / float32(i))
+        ctx.fillRect(
+          node.computedLayout.x - float32(i),
+          node.computedLayout.y - float32(i),
+          node.computedLayout.width + float32(i*2),
+          node.computedLayout.height + float32(i*2)
+        )
 
-    # 1. Background (fillPath equivalent)
     if node.style.backgroundColor.a > 0:
       var bg = node.style.backgroundColor
       bg.a *= curOpacity
@@ -28,7 +33,6 @@ proc paint*(node: Node, ctx: Context) =
       else:
         ctx.fillRect(node.computedLayout.x, node.computedLayout.y, node.computedLayout.width, node.computedLayout.height)
 
-    # 2. Border (strokePath equivalent)
     if node.style.borderWidth > 0 and node.style.borderColor.a > 0:
       var bc = node.style.borderColor
       bc.a *= curOpacity
@@ -42,7 +46,6 @@ proc paint*(node: Node, ctx: Context) =
       else:
         ctx.strokeRect(rect(node.computedLayout.x, node.computedLayout.y, node.computedLayout.width, node.computedLayout.height))
 
-    # 3. Children
     for child in node.children:
       paint(child, ctx)
 
