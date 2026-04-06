@@ -61,23 +61,10 @@ proc native_setStyle(ctx: JSContext; this_val: JSValueConst; argc: cint; argv: J
   except: discard
   return JS_UNDEFINED
 
-proc native_setAttribute(ctx: JSContext; this_val: JSValueConst; argc: cint; argv: JSValueConstArray): JSValue {.cdecl, raises: [].} =
-  try:
-    if argc >= 3:
-      let id = $JS_ToCString(ctx, argv[0])
-      let key = $JS_ToCString(ctx, argv[1])
-      let value = $JS_ToCString(ctx, argv[2])
-      let node = findNodeById(currentEngine.root, id)
-      if node != nil:
-        node.setAttribute(key, value)
-  except: discard
-  return JS_UNDEFINED
-
 proc registerBuiltins*(engine: ScriptEngine) =
   let global = JS_GetGlobalObject(engine.ctx)
   discard JS_SetPropertyStr(engine.ctx, global, "print", JS_NewCFunction(engine.ctx, native_print, "print", 1))
   discard JS_SetPropertyStr(engine.ctx, global, "setStyle", JS_NewCFunction(engine.ctx, native_setStyle, "setStyle", 3))
-  discard JS_SetPropertyStr(engine.ctx, global, "setAttribute", JS_NewCFunction(engine.ctx, native_setAttribute, "setAttribute", 3))
   JS_FreeValue(engine.ctx, global)
 
 proc injectMouseEvent*(engine: ScriptEngine, x, y: float32, button: int, pressed: bool) =

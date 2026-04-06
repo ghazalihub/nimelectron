@@ -74,14 +74,3 @@ proc setPadding*(style: var Style, v: float32) =
 
 proc setMargin*(style: var Style, v: float32) =
   style.marginTop = v; style.marginRight = v; style.marginBottom = v; style.marginLeft = v
-
-# Standard UI Elements Helpers
-proc newButton*(text: string): Node =
-  result = newNode("button")
-  let t = newTextNode(text)
-  result.addChild(t)
-
-proc newTextField*(placeholder: string): Node =
-  result = newNode("input")
-  let t = newTextNode(placeholder)
-  result.addChild(t)
